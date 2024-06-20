@@ -1,0 +1,102 @@
+.modal-header .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.modal-header .close-button:hover {
+    color: #ff0000;
+}
+
+.modal-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.centered {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.otp-box {
+    position: relative;
+}
+
+.otp-box input {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.otp-boxes {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    margin-top: 10px;
+}
+
+.otp-boxes span {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 2px solid #ccc;
+    text-align: center;
+    line-height: 36px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    margin-right: 5px;
+}
+
+.otp-boxes span:last-child {
+    margin-right: 0;
+}
+
+.otp-boxes span.filled {
+    border-color: #007bff;
+}
+
+.form-group.row {
+    margin-top: 20px;
+}
+
+.btn-primary {
+    display: block;
+    margin: 0 auto;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.back-button {
+    background-color: #ccc;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.back-button-text {
+    font-size: 16px;
+}
+
+.back-button:hover {
+    background-color: #aaa;
+}

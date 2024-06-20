@@ -1,0 +1,32 @@
+<div class="login">
+  <h1>Login Page</h1>
+  <form class="login-form" (ngSubmit)="login()">
+    <!-- Username Entry -->
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <div class="input-group">
+        <input type="text" id="username" name="username" [(ngModel)]="username" required [disabled]="showLoginMethods"
+          class="form-control">
+        <i class="bi bi-arrow-right-square-fill" [class.disabled]="showLoginMethods"   (click)="onUsernameSubmit()" type="button"></i>
+      </div>
+    </div>
+    <!-- Conditional Display for Password Login -->
+    <div *ngIf="username && showLoginMethods">
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" [(ngModel)]="password" required class="form-control">
+      </div>
+      <div class="form-group">
+        <label for="tfa">Two Factor Pin:</label>
+        <input type="text" id="tfa" name="tfa" [(ngModel)]="tfa" required class="form-control">
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Login</button>
+      </div>
+      <div class="form-group">
+        <button type="button" (click)="initiatePasswordlessLogin()" class="btn btn-secondary">Passwordless
+          Login</button>
+      </div>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,21 @@
+<p-dialog header="2FA Code" [(visible)]="displayModal"   (onHide)="hideModal()">
+  <form novalidate autocomplete="off" #authKeyForm="ngForm" (ngSubmit)="submit()">
+    <div class="form-group otp-box">
+      <input type="text" id="otpInput" maxlength="6" (input)="onOtpChange($event)" pattern="\d*" inputmode="numeric">
+      <div id="otpBoxes" class="otp-boxes">
+        <span *ngFor="let box of otpBoxes; let i = index" [class.fused]="box !== ''">{{ box }}</span>
+      </div>
+    </div>
+    <div *ngIf="isInvalidPin" class="error-message">
+      Wrong PIN. Please try again.
+    </div>
+
+    <div class="form-group row">
+      <div class="col-md-12">
+        <button [disabled]="!isValidInput" type="submit" class="btn btn-primary btn-block">
+          Submit
+        </button>
+      </div>
+    </div>
+  </form>
+</p-dialog>

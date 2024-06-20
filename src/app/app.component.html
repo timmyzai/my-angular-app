@@ -1,0 +1,11 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <button *ngIf="isLoggedIn" (click)="home()" class="btn btn-primary">Home</button>
+    <button *ngIf="isLoggedIn" (click)="logout()" class="btn btn-danger ml-auto">Logout</button>
+    <!-- <button *ngIf="isLoggedIn" (click)="deleteAccount()" class="btn btn-danger ml-auto">DeleteAccount</button> -->
+  </div>
+</nav>
+
+<div class="container m-3 position-relative mb-3">
+  <router-outlet></router-outlet>
+</div>

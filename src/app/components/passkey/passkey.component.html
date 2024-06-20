@@ -1,0 +1,11 @@
+<h2>Passkey Page</h2>
+
+<div *ngIf="isLoading" class="loading-spinner">
+    <p-progressSpinner></p-progressSpinner>
+</div>
+
+<div *ngIf="!isLoading">
+    <p-selectButton [options]="passKeyOptions" [(ngModel)]="isEnable"
+        (onChange)="enableDisablePassKey($event.value)"></p-selectButton>
+    <app-two-factor-auth-modal #twoFactorModal></app-two-factor-auth-modal>
+</div>

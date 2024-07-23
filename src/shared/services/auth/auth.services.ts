@@ -36,7 +36,27 @@ export class AuthService {
         this.isLoggedInSubject.next(isLoggedIn);
     }
 
-    login(username: string, password: string, tfa: string): Promise<void> {
+    async refreshSession(): Promise<void> {
+        if (this.isLoggedIn()) {
+            const url = `${userDomainUrl}/api/User/RefreshSession`;
+            const token = this.getAccessToken();
+
+            await this.fetchService.fetchGet(url, token).then((response) => {
+                if (response.isSuccess) {
+                    this.accessToken = response.result.encryptedAccessToken;
+                    localStorage.setItem('accessToken', this.accessToken);
+                }
+                else {
+                    this.logout();
+                }
+            }).catch((error) => {
+                this.logout();
+                console.error('Failed to refresh session:', error);
+            });
+        }
+    }
+
+    login(username: string, password: string, tfa: string, rememberMe: boolean): Promise<void> {
         const url = `${userDomainUrl}/api/User/Login`;
         const body = {
             userLoginIdentityAddress: username,
@@ -54,7 +74,6 @@ export class AuthService {
                     localStorage.setItem('accessToken', this.accessToken);
                     localStorage.setItem('publicKey', this.publicKey);
                     localStorage.setItem('userId', this.userId);
-                    const rememberMe = localStorage.getItem('rememberMe');
                     localStorage.setItem('rememberMe', JSON.stringify(rememberMe));
                     if (rememberMe) {
                         this.cacheRememberData(username, password, tfa);
@@ -112,12 +131,12 @@ export class AuthService {
     }
 
     async passwordlessLogin(username: string, pendingVerifyCredential: any): Promise<void> {
-        const url = `${userDomainUrl}/api/User/LoginWithPassKey`;
+        const url = `${userDomainUrl}/api/v2.0/User/LoginWithPassKey`;
         const body = {
             userLoginIdentityAddress: username,
             pendingVerifyCredential: pendingVerifyCredential
         };
-        
+
         const message = await this.encryptService.encryptString(JSON.stringify(pendingVerifyCredential));
         const extraHeaders = {
             'X-Pending-Login': message

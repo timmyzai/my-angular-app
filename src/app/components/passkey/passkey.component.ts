@@ -3,8 +3,9 @@ import { Subscription, take } from 'rxjs';
 import { TwoFactorAuthModalComponent } from 'src/app/modals/two-factor-auth-modal/two-factor-auth-modal.component';
 import { userDomainUrl } from 'src/shared/contants';
 import { AuthService } from 'src/shared/services/auth/auth.services';
-import { ApiCallType, PassKeyChallengeHelper } from 'src/shared/services/helper/PassKeyChallengeHelper';
+import { EncryptionService } from 'src/shared/services/helper/encryption.services';
 import { FetchService } from 'src/shared/services/helper/fetch.services';
+import { ApiCallType, PassKeyChallengeHelper } from 'src/shared/services/helper/passKeyChallenge.services';
 
 interface PassKeyPayload {
   isEnable: boolean;
@@ -27,10 +28,12 @@ export class PassKeyComponent implements OnInit {
   token: string | null | undefined;
   isEnable: boolean = false;
   @ViewChild('twoFactorModal') twoFactorModal: TwoFactorAuthModalComponent;
+  userName: string = '';
 
   constructor(
     private authService: AuthService,
-    private fetchService: FetchService
+    private fetchService: FetchService,
+    private encryptService: EncryptionService
   ) { }
 
   ngOnInit(): void {
@@ -51,6 +54,7 @@ export class PassKeyComponent implements OnInit {
       .then(data => {
         if (data.isSuccess) {
           this.isEnable = data.result.userData.isPassKeyEnabled;
+          this.userName = data.result.userData.userName;
         } else {
           console.error('Error:', data.error);
         }
@@ -68,16 +72,23 @@ export class PassKeyComponent implements OnInit {
 
       const payload: PassKeyPayload = {
         isEnable: isEnable,
-        pendingVerifyCredential: null,
         twoFactorPin: ''
       };
 
-      payload.pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Verify, this.token);
-      const url = `${userDomainUrl}/api/User/EnableDisablePassKey`;
-      this.fetchService.fetchPut(url, payload, this.token)
+      var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Verify, this.token);
+      const message = JSON.stringify(pendingVerifyCredential);
+      var publicKey = this.authService.getPublicKey();
+      const encryptedPendingVerifyCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
+      const extraHeaders = {
+        'X-Pending-Verify': encryptedPendingVerifyCredential
+      };
+
+      const url = `${userDomainUrl}/api/v2.0/User/EnableDisablePassKey`;
+      this.fetchService.fetchPut(url, payload, this.token, extraHeaders)
         .then(response => {
           if (response.isSuccess) {
             alert(`Passkey ${response.result.userData.isPassKeyEnabled ? 'enabled' : 'disabled'} successfully`);
+            this.loadData()
           } else {
             throw new Error(response.error.errorMessage);
           }
@@ -89,33 +100,38 @@ export class PassKeyComponent implements OnInit {
       console.error('Operation failed:', error);
       alert('Operation failed: ' + error);
     }
-    finally {
-      this.loadData()
-    };
   }
 
   private async createPassKey() {
     const twoFactorPin = await this.getTwoFactorPin();
     const pendingCreateCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Create, this.token);
-    const url = `${userDomainUrl}/api/PassKey/Create`;
+    const message = JSON.stringify(pendingCreateCredential);
+    var publicKey = this.authService.getPublicKey();
+    const encryptedPendingCreateCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
+
+    const extraHeaders = {
+      'X-Pending-Create': encryptedPendingCreateCredential
+    };
+    const url = `${userDomainUrl}/api/v2.0/PassKey/Create`;
     const payload = {
       twoFactorPin: twoFactorPin,
       pendingCreateCredential: pendingCreateCredential
     };
-    this.fetchService.fetchPost(url, payload, this.token)
+    this.fetchService.fetchPost(url, payload, this.token, extraHeaders)
       .then(response => {
         if (response.isSuccess) {
           alert('Passkey created successfully');
         } else {
-          throw new Error(response.error.errorMessage);
+          if (response.error && response.error.errorMessage) throw new Error(response.error.errorMessage);
+          throw new Error('An unknown error occurred');
         }
       })
       .catch(error => {
         alert('Operation failed: ' + error.message);
       })
       .finally(() => this.loadData());
-
   }
+
   private async GetUserHasExistingPassKey(): Promise<Boolean> {
     const url = `${userDomainUrl}/api/PassKey/GetUserHasExistingPassKeyBool`;
     var response = await this.fetchService.fetchGet(url, this.token);

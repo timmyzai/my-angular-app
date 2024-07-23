@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { Subscription, take } from 'rxjs';
+import { TwoFactorAuthModalComponent } from 'src/app/modals/two-factor-auth-modal/two-factor-auth-modal.component';
 import { AuthService } from 'src/shared/services/auth/auth.services';
-import { ApiCallType, PassKeyChallengeHelper } from 'src/shared/services/helper/PassKeyChallengeHelper';
-import { FetchService } from 'src/shared/services/helper/fetch.services';
+import { ApiCallType, PassKeyChallengeHelper } from 'src/shared/services/helper/passKeyChallenge.services';
 
 @Component({
   selector: 'app-login',
@@ -17,15 +18,16 @@ export class LoginComponent implements OnInit {
   showLoginMethods: boolean = false;
   token: string | null | undefined;
   isLoading: boolean = false;
+  private pinSubscription: Subscription;
+  @ViewChild('twoFactorModal') twoFactorModal: TwoFactorAuthModalComponent;
 
   constructor(
     private authService: AuthService,
-    private fetchService: FetchService
   ) { }
 
   ngOnInit(): void {
-    const rememberMe = localStorage.getItem('rememberMe');
-    this.rememberMe = rememberMe ? JSON.parse(rememberMe) : false;
+    this.rememberMe = JSON.parse(localStorage.getItem('rememberMe'));
+    debugger
     if (this.rememberMe) {
       const rememberData = this.authService.getRememberData();
       if (rememberData) {
@@ -35,26 +37,23 @@ export class LoginComponent implements OnInit {
       }
     }
   }
+  onEnterPress(event: Event) {
+    event.preventDefault();
+    if (event instanceof KeyboardEvent && !this.showLoginMethods) this.showLoginMethods = true;
+  }
 
   onUsernameSubmit() {
     this.showLoginMethods = true;
   }
-  login(): void {
-    this.authService.login(this.username, this.password, this.tfa)
-      .then(() => {
-        localStorage.setItem('rememberMe', JSON.stringify(this.rememberMe));
-        if (this.rememberMe) {
-          this.authService.cacheRememberData(this.username, this.password, this.tfa);
-        }
-      })
-      .catch(error => {
-        this.errorMessage = 'Login failed: ' + error.message;
-      });
+  async login(): Promise<void> {
+    this.authService.login(this.username, this.password, this.tfa, this.rememberMe);
   }
   async initiatePasswordlessLogin() {
     try {
       var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Login, null, this.username)
-      await this.authService.passwordlessLogin(this.username, pendingVerifyCredential);
+      if (pendingVerifyCredential) {
+        await this.authService.passwordlessLogin(this.username, pendingVerifyCredential);
+      }
     } finally {
       this.isLoading = false;
     }

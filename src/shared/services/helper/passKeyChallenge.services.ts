@@ -16,7 +16,6 @@ export class PassKeyChallengeHelper {
         };
         try {
             const response = await fetch(url, { method: 'GET', headers });
-            if (!response.ok) throw new Error('Network response was not ok.');
 
             const data = await response.json();
 
@@ -25,7 +24,8 @@ export class PassKeyChallengeHelper {
             if (!data.isSuccess) throw new Error(data.error);
             return await WebAuthnHandler.handleWebAuthnResponse(callType, data);
         } catch (error) {
-            console.error('Error:', error);
+            alert('Operation failed: ' + error);
+            throw error;
         }
     }
     private static getUrlSuffix(callType: ApiCallType, userLoginIdentityAddress?: string | null): string {

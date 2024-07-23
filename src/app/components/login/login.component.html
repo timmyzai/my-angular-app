@@ -6,8 +6,9 @@
       <label for="username">Username:</label>
       <div class="input-group">
         <input type="text" id="username" name="username" [(ngModel)]="username" required [disabled]="showLoginMethods"
-          class="form-control">
-        <i class="bi bi-arrow-right-square-fill" [class.disabled]="showLoginMethods"   (click)="onUsernameSubmit()" type="button"></i>
+          (keydown.enter)="onEnterPress($event)" class="form-control">
+        <i class="bi bi-arrow-right-square-fill" [class.disabled]="showLoginMethods" (click)="onUsernameSubmit()"
+          type="button"></i>
       </div>
     </div>
     <!-- Conditional Display for Password Login -->
@@ -20,6 +21,11 @@
         <label for="tfa">Two Factor Pin:</label>
         <input type="text" id="tfa" name="tfa" [(ngModel)]="tfa" required class="form-control">
       </div>
+      <!-- Remember Me Checkbox -->
+      <div class="form-group">
+        <input type="checkbox" id="rememberMe" name="rememberMe" [(ngModel)]="rememberMe">
+        <label for="rememberMe">Remember Me</label>
+      </div>
       <div class="form-group">
         <button type="submit" class="btn btn-primary">Login</button>
       </div>
@@ -30,3 +36,4 @@
     </div>
   </form>
 </div>
+<!-- <app-two-factor-auth-modal #twoFactorModal></app-two-factor-auth-modal> -->

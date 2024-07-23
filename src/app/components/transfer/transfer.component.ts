@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { walletDomainUrl } from 'src/shared/contants';
-import { encryptWithPemSHA256 } from 'src/assets/js/encryption.js';
 import { AuthService } from 'src/shared/services/auth/auth.services';
+import { EncryptionService } from 'src/shared/services/helper/encryption.services';
 import { FetchService } from 'src/shared/services/helper/fetch.services';
 
 @Component({
@@ -23,7 +23,11 @@ export class TransferComponent implements OnInit {
   ownerWalletGroupsId: string = '';
   token: string | null | undefined;
 
-  constructor(private authService: AuthService, private fetchService: FetchService) { }
+  constructor(
+    private authService: AuthService, 
+    private fetchService: FetchService,
+    private EncryptionService: EncryptionService
+  ) { }
 
   ngOnInit(): void {
     this.token = this.authService.getAccessToken();
@@ -80,7 +84,7 @@ export class TransferComponent implements OnInit {
   async encrptyedTransfer() {
     const url = `${walletDomainUrl}/api/v2.0/Transactions/Transfer`;
     var publicKey = this.authService.getPublicKey();
-    const encrptyedData = await encryptWithPemSHA256(this.transferData, publicKey);
+    const encrptyedData = await this.EncryptionService.encryptWithPem(JSON.stringify(this.transferData), publicKey);
 
     const body = {
       EncryptedData: encrptyedData,

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { userDomainUrl } from 'src/shared/contants';
 import { AuthService } from 'src/shared/services/auth/auth.services';
+import { FetchService } from 'src/shared/services/helper/fetch.services';
 import { SignalrService } from 'src/shared/services/signalr.service';
 
 
@@ -13,12 +15,20 @@ export class AppComponent implements OnInit {
   title = 'my-angular-app';
   isLoggedIn: boolean = false;
 
-  constructor(private authService: AuthService, private router: Router, private signalrService: SignalrService) { }
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private signalrService: SignalrService,
+    private fetchService: FetchService
+  ) { }
 
   ngOnInit(): void {
+    this.authService.refreshSession();
+
     this.authService.isLoggedInObservable().subscribe((isLoggedIn: boolean) => {
       this.isLoggedIn = isLoggedIn;
-      if (isLoggedIn) {
+      var isSignalREnable = false;
+      if (isSignalREnable && isLoggedIn) {
         this.signalrService.startConnection().then(() => {
           const userId = this.authService.getUserId();
           if (userId) {

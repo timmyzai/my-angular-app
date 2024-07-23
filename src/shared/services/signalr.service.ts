@@ -9,16 +9,18 @@ export class SignalrService {
 
     constructor() { }
 
-    public startConnection = () => {
+    public startConnection = (): Promise<void> => {
         this.hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl('https://bytebanknotisapi.workinjupiter.club/usermessageHub')
-            // .withUrl('http://localhost:7185/usermessageHub')
+            .withUrl('http://localhost:7185/usermessageHub')
             .build();
 
-        this.hubConnection
+        return this.hubConnection
             .start()
             .then(() => console.log('Connection Started!'))
-            .catch(err => console.error('Error while starting connection: ' + err));
+            .catch(err => {
+                console.error('Error while starting connection: ' + err);
+                throw err; // Rethrow to ensure the error is propagated
+            });
     }
 
     public registerUser(userId: string) {

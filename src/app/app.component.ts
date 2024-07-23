@@ -18,9 +18,19 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.authService.isLoggedInObservable().subscribe((isLoggedIn: boolean) => {
       this.isLoggedIn = isLoggedIn;
+      if (isLoggedIn) {
+        this.signalrService.startConnection().then(() => {
+          const userId = this.authService.getUserId();
+          if (userId) {
+            this.signalrService.registerUser(userId);
+          } else {
+            console.error('No userId found');
+          }
+        }).catch(err => console.error('Failed to establish connection or get userId', err));
+      }
     });
-    // this.signalrService.startConnection();
   }
+
   home(): void {
     this.router.navigate(['/dashboard']);
   }

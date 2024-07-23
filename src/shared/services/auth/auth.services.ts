@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { userDomainUrl } from '../../contants';
 import { FetchService } from '../helper/fetch.services';
+import { EncryptionService } from '../helper/encryption.services';
 
 
 @Injectable({
@@ -13,8 +14,13 @@ export class AuthService {
     private accessToken: string = '';
     private publicKey: string = '';
     private rememberDataKey = 'rememberData';
+    private userId: string = '';
 
-    constructor(private router: Router, private fetchService: FetchService) {
+    constructor(
+        private router: Router,
+        private fetchService: FetchService,
+        private encryptService: EncryptionService
+    ) {
         this.isLoggedInSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
     }
 
@@ -43,12 +49,18 @@ export class AuthService {
                 if (data.isSuccess) {
                     this.accessToken = data.result?.encryptedAccessToken || '';
                     this.publicKey = data.result?.publicKey || '';
+                    this.userId = data.result?.user?.userId || '';
 
                     localStorage.setItem('accessToken', this.accessToken);
                     localStorage.setItem('publicKey', this.publicKey);
-
+                    localStorage.setItem('userId', this.userId);
+                    const rememberMe = localStorage.getItem('rememberMe');
+                    localStorage.setItem('rememberMe', JSON.stringify(rememberMe));
+                    if (rememberMe) {
+                        this.cacheRememberData(username, password, tfa);
+                    }
                     this.setIsLoggedIn(true);
-                    this.router.navigate(['/dashboard']); // Navigate after successful login
+                    this.router.navigate(['/dashboard']);
                 } else if (data.error !== null && data.error.errorMessage !== null && data.error.errorMessage) {
                     throw new Error(data.error.errorMessage);
                 } else {
@@ -86,6 +98,9 @@ export class AuthService {
         return this.publicKey || localStorage.getItem('publicKey') || '';
     }
 
+    getUserId(): string {
+        return this.userId || localStorage.getItem('userId') || '';
+    }
     cacheRememberData(username: string, password: string, tfa: string): void {
         const rememberData = { username, password, tfa };
         localStorage.setItem(this.rememberDataKey, JSON.stringify(rememberData));
@@ -96,13 +111,19 @@ export class AuthService {
         return rememberDataString ? JSON.parse(rememberDataString) : null;
     }
 
-    passwordlessLogin(username: string, pendingVerifyCredential: any): void {
+    async passwordlessLogin(username: string, pendingVerifyCredential: any): Promise<void> {
         const url = `${userDomainUrl}/api/User/LoginWithPassKey`;
         const body = {
             userLoginIdentityAddress: username,
             pendingVerifyCredential: pendingVerifyCredential
         };
-        this.fetchService.fetchPost(url, body)
+        
+        const message = await this.encryptService.encryptString(JSON.stringify(pendingVerifyCredential));
+        const extraHeaders = {
+            'X-Pending-Login': message
+        };
+
+        this.fetchService.fetchPost(url, body, null, extraHeaders)
             .then(data => {
                 if (data.isSuccess) {
                     this.accessToken = data.result?.encryptedAccessToken || '';

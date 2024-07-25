@@ -15,7 +15,9 @@ export class EncryptionService {
                 throw new Error('Invalid or unsupported public key format.');
             }
 
-            const encryptedBytes = publicKey.encrypt(message, 'RSA-OAEP', { md: forge.md.sha256.create() });
+            const encryptedBytes = publicKey.encrypt(message, 'RSA-OAEP', {
+                md: forge.md.sha256.create()
+            });
             const encryptedBase64 = forge.util.encode64(encryptedBytes);
             return encryptedBase64;
         } catch (e) {

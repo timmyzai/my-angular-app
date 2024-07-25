@@ -34,5 +34,18 @@
         <label for="network" class="form-label">Network</label>
         <input type="text" class="form-control" id="network" name="network" [(ngModel)]="transferData.network" required>
     </div>
+    <div class="mb-3">
+        <label class="form-label">Transfer Method</label>
+        <div>
+            <input type="radio" id="transferWithPasskey" name="transferMethod" value="passkey"
+                [(ngModel)]="transferMethod" required>
+            <label for="transferWithPasskey">Transfer with Passkey</label>
+        </div>
+        <div>
+            <input type="radio" id="transferWithTFA" name="transferMethod" value="tfa"
+                [(ngModel)]="transferMethod" required>
+            <label for="transferWithTFA">Transfer with Two Factor Authentication</label>
+        </div>
+    </div>
     <button type="submit" class="btn btn-primary">Transfer</button>
 </form>

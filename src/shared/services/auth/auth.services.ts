@@ -131,18 +131,18 @@ export class AuthService {
     }
 
     async passwordlessLogin(username: string, pendingVerifyCredential: any): Promise<void> {
-        const url = `${userDomainUrl}/api/v2.0/User/LoginWithPassKey`;
+        const url = `${userDomainUrl}/api/User/LoginWithPassKey`;
         const body = {
             userLoginIdentityAddress: username,
             pendingVerifyCredential: pendingVerifyCredential
         };
 
-        const message = await this.encryptService.encryptString(JSON.stringify(pendingVerifyCredential));
-        const extraHeaders = {
-            'X-Pending-Login': message
-        };
+        // const message = await this.encryptService.encryptString(JSON.stringify(pendingVerifyCredential));
+        // const extraHeaders = {
+        //     'X-Pending-Login': message
+        // };
 
-        this.fetchService.fetchPost(url, body, null, extraHeaders)
+        this.fetchService.fetchPost(url, body, null)
             .then(data => {
                 if (data.isSuccess) {
                     this.accessToken = data.result?.encryptedAccessToken || '';

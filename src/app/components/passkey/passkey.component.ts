@@ -69,22 +69,22 @@ export class PassKeyComponent implements OnInit {
         this.createPassKey();
         return;
       }
+      var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Verify, this.token);
 
       const payload: PassKeyPayload = {
         isEnable: isEnable,
-        twoFactorPin: ''
+        twoFactorPin: '',
+        pendingVerifyCredential: pendingVerifyCredential
       };
+      // const message = JSON.stringify(pendingVerifyCredential);
+      // var publicKey = this.authService.getPublicKey();
+      // const encryptedPendingVerifyCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
+      // const extraHeaders = {
+      //   'X-Pending-Verify': encryptedPendingVerifyCredential
+      // };
 
-      var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Verify, this.token);
-      const message = JSON.stringify(pendingVerifyCredential);
-      var publicKey = this.authService.getPublicKey();
-      const encryptedPendingVerifyCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
-      const extraHeaders = {
-        'X-Pending-Verify': encryptedPendingVerifyCredential
-      };
-
-      const url = `${userDomainUrl}/api/v2.0/User/EnableDisablePassKey`;
-      this.fetchService.fetchPut(url, payload, this.token, extraHeaders)
+      const url = `${userDomainUrl}/api/User/EnableDisablePassKey`;
+      this.fetchService.fetchPut(url, payload, this.token)
         .then(response => {
           if (response.isSuccess) {
             alert(`Passkey ${response.result.userData.isPassKeyEnabled ? 'enabled' : 'disabled'} successfully`);
@@ -105,19 +105,20 @@ export class PassKeyComponent implements OnInit {
   private async createPassKey() {
     const twoFactorPin = await this.getTwoFactorPin();
     const pendingCreateCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Create, this.token);
-    const message = JSON.stringify(pendingCreateCredential);
-    var publicKey = this.authService.getPublicKey();
-    const encryptedPendingCreateCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
+    // const message = JSON.stringify(pendingCreateCredential);
+    // var publicKey = this.authService.getPublicKey();
+    // const encryptedPendingCreateCredential = await this.encryptService.encryptWithPem_Chunk(message, publicKey);
 
-    const extraHeaders = {
-      'X-Pending-Create': encryptedPendingCreateCredential
-    };
-    const url = `${userDomainUrl}/api/v2.0/PassKey/Create`;
+    // const extraHeaders = {
+    //   'X-Pending-Create': encryptedPendingCreateCredential
+    // };
+    const url = `${userDomainUrl}/api/PassKey/Create`;
     const payload = {
+      userName: this.userName,
       twoFactorPin: twoFactorPin,
       pendingCreateCredential: pendingCreateCredential
     };
-    this.fetchService.fetchPost(url, payload, this.token, extraHeaders)
+    this.fetchService.fetchPost(url, payload, this.token)
       .then(response => {
         if (response.isSuccess) {
           alert('Passkey created successfully');

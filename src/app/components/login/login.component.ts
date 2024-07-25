@@ -27,7 +27,6 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.rememberMe = JSON.parse(localStorage.getItem('rememberMe'));
-    debugger
     if (this.rememberMe) {
       const rememberData = this.authService.getRememberData();
       if (rememberData) {

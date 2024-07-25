@@ -3,6 +3,7 @@ import { walletDomainUrl } from 'src/shared/contants';
 import { AuthService } from 'src/shared/services/auth/auth.services';
 import { EncryptionService } from 'src/shared/services/helper/encryption.services';
 import { FetchService } from 'src/shared/services/helper/fetch.services';
+import { ApiCallType, PassKeyChallengeHelper } from 'src/shared/services/helper/passKeyChallenge.services';
 
 @Component({
   selector: 'app-transfer',
@@ -17,20 +18,30 @@ export class TransferComponent implements OnInit {
     twoFactorPin: '123456',
     ownerWalletGroupsId: "",
     receiverWalletAddress: '0x6A3B0Bd4E8C7Cbb06C871BCfcc7984C4ddcA96f1',
-    network: 'ETH'
+    network: 'ETH',
+    pendingVerifyCredential: ''
   };
   walletGroups: any[] = [];
   ownerWalletGroupsId: string = '';
   token: string | null | undefined;
+  username: string;
+  transferMethod: string = 'tfa';
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private fetchService: FetchService,
     private EncryptionService: EncryptionService
   ) { }
 
   ngOnInit(): void {
     this.token = this.authService.getAccessToken();
+    var rememberMe = JSON.parse(localStorage.getItem('rememberMe'));
+    if (rememberMe) {
+      const rememberData = this.authService.getRememberData();
+      if (rememberData) {
+        this.username = rememberData.username || '';
+      }
+    }
     this.getWalletGroups();
   }
 
@@ -53,7 +64,9 @@ export class TransferComponent implements OnInit {
       .catch((error) => console.error('Error:', error));
   }
 
-  transfer() {
+  async transfer() {
+    var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Login, null, this.username)
+
     const url = `${walletDomainUrl}/api/Transactions/Transfer`;
     return this.fetchService.fetchPost(url, this.transferData, this.token)
       .then(data => {
@@ -66,7 +79,8 @@ export class TransferComponent implements OnInit {
             twoFactorPin: '',
             ownerWalletGroupsId: null,
             receiverWalletAddress: '',
-            network: ''
+            network: '',
+            pendingVerifyCredential: pendingVerifyCredential
           };
         } else if (data.error !== null && data.error.errorMessage !== null && data.error.errorMessage) {
           throw new Error(data.error.errorMessage);
@@ -84,11 +98,20 @@ export class TransferComponent implements OnInit {
   async encrptyedTransfer() {
     const url = `${walletDomainUrl}/api/v2.0/Transactions/Transfer`;
     var publicKey = this.authService.getPublicKey();
-    const encrptyedData = await this.EncryptionService.encryptWithPem(JSON.stringify(this.transferData), publicKey);
+    const encrptyedData = await this.EncryptionService.encryptWithPem_Chunk(JSON.stringify(this.transferData), publicKey);
 
-    const body = {
+    var body = {
       EncryptedData: encrptyedData,
+      PendingVerifyCredential: null as any,
     };
+
+    debugger;
+    console.log("transferMethod", this.transferMethod);
+    if (this.transferMethod === 'passkey') {
+      var pendingVerifyCredential = await PassKeyChallengeHelper.getChallenge(ApiCallType.Login, null, this.username)
+      body.PendingVerifyCredential = pendingVerifyCredential;
+    }
+
 
     return this.fetchService.fetchPost(url, body, this.token)
       .then(data => {
@@ -101,7 +124,8 @@ export class TransferComponent implements OnInit {
             twoFactorPin: '',
             ownerWalletGroupsId: null,
             receiverWalletAddress: '',
-            network: ''
+            network: '',
+            pendingVerifyCredential: ''
           };
         } else if (data.error !== null && data.error.errorMessage !== null && data.error.errorMessage) {
           throw new Error(data.error.errorMessage);
